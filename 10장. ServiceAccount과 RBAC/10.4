@@ -1,0 +1,46 @@
+# 10.4 서비스 어카운트에 이미지 레지스트리 접근을 위한 시크릿 설정
+
+ 
+
+<aside>
+💡
+
+7장! 
+docker-registry : 도커 이미지너를 저장하고 관리하는 중앙 저장소 역할 
+docker-registry와 연결된 **시크릿 설정**은, 프라이빗 레즈스트리에 접근할 때 필요한 인증 정보를 미리 설정해서 자동으로 접근할 수 있도록 하는 방법! 
+
+</aside>
+
+### **서비스 어카운트(Service Account)의 역할**
+
+- 비공개 이미지 레지스트리에 접근할 수 있도록 시크릿을 설정할 수 있음
+- 여러 파드들이 레지스트리에 접근할 수 있게 됨
+- docker-registry에 접근하기 위해서 docker에서 이미지 가져올때마다 시크릿이 필요한데, 많은 파드에서 동일한 레지스트리 사용하는 경우에는 시크릿을 직접 매번 지정하는게 번거로울 수 있음
+- Docker Registry 시크릿을 Service Account에 연결하면, 해당 Service Account를 사용하는 모든 파드가 자동으로 이 시크릿을 사용할 수 있
+- 즉, 파드나 디플로이먼트마다 시크릿을 직접 설정하지 않아도 되고, Service Account만 지정하면 시크릿을 자동으로 적용받게 됨
+
+### 서비스 어카운트 정의 YAML 파일 예제
+
+```yaml
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: reg-auth-a1icekl05
+  namespace: default
+imagePullSecrets : ### 요부분이 추가된 정보~~ 
+- name: registry-auth
+```
+
+```bash
+$ kubectl apply -f sa-reg-auth. yaml
+serviceaccount / reg-auth-alicekl 06 created
+
+$ kubectl describe sa reg-auth-alicek106 | grep Image
+Image puII secrets: registry-auth
+```
+
+앞으로생성하는 파드 YAML에서 
+
+`serviceAccountName` : reg-auth-alicek106 
+
+서비스 어카운트 생성하면, 자동으로 `imagePullSecrets` 항목이 파드 스펙에 추가됨
